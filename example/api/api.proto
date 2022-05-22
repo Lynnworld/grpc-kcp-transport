@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package kcp.demo;
+
+option go_package = "demo";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+service Demo {
+  rpc Hello(HelloRequest) returns (HelloReply);
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+}
