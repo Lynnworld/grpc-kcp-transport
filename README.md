@@ -7,7 +7,11 @@ this is a helper function for you can transport grpc request over kcp
 
 
 how to use
-```code
+```
+-> go get -u github.com/Lynnworld/grpc-kcp-transport
+```
+
+```go
 // server 
 address := "localhost:8080"
 cfg := &kcp.Config{}
