@@ -2,6 +2,7 @@ package kcp
 
 import (
 	"context"
+	"fmt"
 	xkcp "github.com/xtaci/kcp-go/v5"
 	"github.com/xtaci/tcpraw"
 	"google.golang.org/grpc"
@@ -66,6 +67,62 @@ func (l *listener) Accept() (net.Conn, error) {
 	conn.SetWindowSize(l.c.SndWnd, l.c.RcvWnd)
 	conn.SetACKNoDelay(l.c.AckNodelay)
 	return conn, nil
+}
+
+// ServeGrpc for grpc server
+func ServeGrpc(address string, server *grpc.Server, c *Config) error {
+	// tcp mode
+	if c.TCP {
+		lis, err := Listener(address, c)
+		if err != nil {
+			return err
+		}
+		return server.Serve(lis)
+	}
+	// udp mode
+	laddr, err := net.ResolveUDPAddr("udp", address)
+	if err != nil {
+		return err
+	}
+	if !laddr.IP.IsUnspecified() {
+		listen, err := Listener(address, c)
+		if err != nil {
+			return err
+		}
+		return server.Serve(listen)
+	}
+	ipList := getLocalAddress()
+	localIp := ipList[0]
+	ipList = ipList[1:]
+	for _, ip := range ipList {
+		addr := fmt.Sprintf("%s:%d", ip, laddr.Port)
+		listen, err := Listener(addr, c)
+		if err != nil {
+			return err
+		}
+		go func() {
+			_ = server.Serve(listen)
+		}()
+	}
+	addr := fmt.Sprintf("%s:%d", localIp, laddr.Port)
+	listen, err := Listener(addr, c)
+	if err != nil {
+		return err
+	}
+	return server.Serve(listen)
+}
+
+func getLocalAddress() []string {
+	ips := make([]string, 0)
+	addrs, _ := net.InterfaceAddrs()
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok {
+			if ipnet.IP.To4() != nil {
+				ips = append(ips, ipnet.IP.String())
+			}
+		}
+	}
+	return ips
 }
 
 // Listener Listen for grpc server listen, addr is like "127.0.0.1:8080"

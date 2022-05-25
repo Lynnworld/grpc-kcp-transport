@@ -9,19 +9,13 @@ import (
 )
 
 func main() {
-	address := ":8080"
+	address := "0.0.0.0:8080"
 	config := &kcp.Config{}
 
 	server := grpc.NewServer()
 	demo.RegisterDemoServer(server, &serverImpl{})
-
-	listener, err := kcp.Listener(address, config)
-	if err != nil {
-		panic(err)
-	}
-	go server.Serve(listener)
+	go kcp.ServeGrpc(address, server, config)
 	// you can also use server.Serve(l) tcp on same address
-
 	l2, err := net.Listen("tcp", address)
 	if err != nil {
 		panic(err)

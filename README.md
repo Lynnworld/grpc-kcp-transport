@@ -17,8 +17,7 @@ address := "localhost:8080"
 cfg := &kcp.Config{}
 server := grpc.NewServer()
 demo.RegisterDemoServer(server, &serverImpl{})
-listener, err := kcp.Listener(address, config)
-server.Serve(listener)
+server.Serve(address,server,cfg)
 
 // client
 address := "localhost:8080"
